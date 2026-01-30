@@ -407,7 +407,8 @@ function showCheckInForm(roomId) {
         </div>
         <div class="form-group">
           <label for="mood">Mood:</label>
-          <select id="mood">
+          <select id="mood" required>
+            <option value="">Select mood</option>
             <option value="focused">Do not disturb</option>
             <option value="collaborative">Dont mind company!</option>
             <option value="relaxed">Join, but shhhh</option>
