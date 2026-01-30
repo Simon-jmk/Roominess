@@ -67,11 +67,14 @@ async function loginWithGoogle() {
     return;
   }
 
+  // Use full URL (origin + path) for GitHub Pages subpath
+  const redirectUrl = window.location.origin + window.location.pathname;
+
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
       queryParams: { hd: "chasacademy.se" },
-      redirectTo: window.location.origin,
+      redirectTo: redirectUrl,
     },
   });
 
