@@ -38,6 +38,27 @@ function setupAuthListeners() {
   });
 }
 
+// Hamburger
+function setupHamburgerMenu() {
+    const hamburger = document.querySelector('.hamburger');
+    const navMenu = document.querySelector('.nav-menu');
+
+    if (!hamburger || !navMenu) {
+        console.error('❌ Hamburger or nav menu not found');
+        return;
+    }
+
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navMenu.classList.toggle('active');
+    });
+
+    document.querySelectorAll('.nav-menu li a').forEach(n => n.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+    }));
+}
+
 // Login with Google
 async function loginWithGoogle() {
   console.log("🔄 Logging in with Google...");
@@ -382,6 +403,9 @@ function setupEventListeners() {
       if (e.target.id === "room-modal") closeModal();
     });
   }
+
+  // Setup hamburger menu
+  setupHamburgerMenu();
 }
 
 // Initialize app when DOM is ready
