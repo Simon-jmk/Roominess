@@ -12,9 +12,17 @@
 <rect x="466.17" y="866.4" width="158.27" height="101.597" fill="#D9D9D9" stroke="#D9D9D9" stroke-width="0.691134"/>
 <rect x="195" y="683" width="530" height="55.5032" fill="#D9D9D9"/>
 <rect x="655.346" y="683.346" width="69.3087" height="54.812" fill="#66D575" stroke="#66D575" stroke-width="0.691134"/>
+<text x="690" y="705" text-anchor="middle" fill="white" font-size="12" font-weight="bold">❎ EXIT</text>
 <path d="M81.6543 183.346V238.654H2.3457V183.346H81.6543Z" fill="#D9D9D9" stroke="#D9D9D9" stroke-width="0.691134"/>
 <rect x="2.34557" y="104.346" width="79.0553" height="63.3089" fill="#D9D9D9" stroke="#D9D9D9" stroke-width="0.691134"/>
-<rect x="512" y="760" width="32.7913" height="80.625" rx="3" fill="#964B00"/>
+<rect x="512" y="760" width="32.7913" height="80.625" rx="3" fill="#4A4A4A"/>
+<text x="528.4" y="772" text-anchor="middle" fill="white" font-size="8" font-weight="bold">K</text>
+<text x="528.4" y="782" text-anchor="middle" fill="white" font-size="8" font-weight="bold">I</text>
+<text x="528.4" y="792" text-anchor="middle" fill="white" font-size="8" font-weight="bold">T</text>
+<text x="528.4" y="802" text-anchor="middle" fill="white" font-size="8" font-weight="bold">C</text>
+<text x="528.4" y="812" text-anchor="middle" fill="white" font-size="8" font-weight="bold">H</text>
+<text x="528.4" y="822" text-anchor="middle" fill="white" font-size="8" font-weight="bold">E</text>
+<text x="528.4" y="832" text-anchor="middle" fill="white" font-size="8" font-weight="bold">N</text>
 <path d="M81.6543 254.346V309.654H2.3457V254.346H81.6543Z" fill="#D9D9D9" stroke="#D9D9D9" stroke-width="0.691134"/>
 <path d="M246.654 413.346V468.654H167.346V413.346H246.654Z" fill="#D9D9D9" stroke="#D9D9D9" stroke-width="0.691134"/>
 <path d="M246.654 344.346V399.654H167.346V344.346H246.654Z" fill="#D9D9D9" stroke="#D9D9D9" stroke-width="0.691134"/>

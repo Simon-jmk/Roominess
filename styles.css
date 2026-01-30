@@ -274,6 +274,8 @@ main {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* ========================================

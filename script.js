@@ -555,16 +555,22 @@ function startBookingTimerInterval() {
 // Set up event listeners
 function setupEventListeners() {
   const loginBtn = document.getElementById("login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
   const modal = document.getElementById("room-modal");
 
   if (loginBtn) loginBtn.addEventListener("click", loginWithGoogle);
-  if (logoutBtn) logoutBtn.addEventListener("click", logout);
   if (modal) {
     modal.addEventListener("click", (e) => {
       if (e.target.id === "room-modal") closeModal();
     });
   }
+
+  // Setup logout link in navigation
+  document.querySelectorAll('a[href="#logout"]').forEach(link => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      logout();
+    });
+  });
 
   // Setup hamburger menu
   setupHamburgerMenu();
