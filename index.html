@@ -1,39 +1,23 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Roominess</title>
-    <link rel="icon" type="image/png" href="logo.png" />
-    <link rel="stylesheet" href="styles.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Michroma&display=swap"
-      rel="stylesheet"
-    />
-  </head>
 
-  <body>
-    <!-- Header -->
-    <header>
-      <nav class="navbar">
-        <div class="nav-brand">
-          <img src="logo.png" alt="Roominess Logo" />
-          <h1>Roominess</h1>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roominess</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+</head>
 
-        <div class="hamburger">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </div>
-
-        <ul class="nav-menu">
-          <li><a href="#map">Map</a></li>
-          <li><a href="#profile">Profile</a></li>
-          <li><a href="#logout">Log Out</a></li>
-        </ul>
-      </nav>
-    </header>
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar">
+      <div class="nav-brand">
+        <img src="logo.png" alt="Roominess Logo">
+        <h1>Roominess</h1>
+      </div>
 
     <!-- Main Content -->
     <main>
@@ -48,11 +32,21 @@
         </div>
       </div>
 
-      <!-- User Section -->
-      <div id="user-section" class="section" style="display: none">
-        <!-- User Info Bar -->
-        <div class="user-info">
-          <span>Logged in as: <strong id="user-email"></strong></span>
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color available"></div>
+          <span>Available</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color occupied"></div>
+          <span>Occupied</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color booked"></div>
+          <span>Booked</span>
+          <span class="clock-icon">🕐</span>
+          <span id="booking-timer" class="booking-timer">--:--</span>
         </div>
 
         <!-- Legend -->
@@ -64,12 +58,6 @@
           <div class="legend-item">
             <div class="legend-color occupied"></div>
             <span>Occupied</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color booked"></div>
-            <span>Booked</span>
-            <span class="clock-icon">🕐</span>
-            <span id="booking-timer" class="booking-timer">--:--</span>
           </div>
         </div>
 
@@ -87,41 +75,13 @@
       </div>
     </main>
 
-    <!-- Room Details Modal -->
-    <div id="room-modal" class="modal">
-      <div class="modal-content">
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-        <h2 id="modal-room-name"></h2>
-
-        <div class="modal-status">
-          <div class="status-indicator">
-            <span id="modal-room-status">Status:</span>
-            <div id="modal-status-icon" class="legend-color"></div>
-            <span id="modal-status-text"></span>
-          </div>
-        </div>
-
-        <div class="modal-capacity">
-          <p id="modal-room-capacity"></p>
-          <p id="modal-occupancy-info"></p>
-        </div>
-
-        <div class="modal-extra">
-          <div id="extra-content" class="extra-content">
-            <!-- Camera and form go here -->
-          </div>
-        </div>
-
-        <div id="modal-actions">
-          <!-- Scan button goes here -->
-        </div>
+      <div class="modal-capacity">
+        <p id="modal-room-capacity"></p>
+        <p id="modal-occupancy-info"></p>
       </div>
     </div>
 
     <!-- Load Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Load application script -->
-    <script src="script.js?v=4.0.0"></script>
-  </body>
 </html>
