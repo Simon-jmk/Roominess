@@ -2,6 +2,7 @@
 let currentUser = null;
 let rooms = [];
 let supabaseClient = null;
+let currentRoom = null;
 let bookingTimerInterval = null;
 
 // Initialize Supabase when page loads
@@ -70,16 +71,13 @@ async function loginWithGoogle() {
     return;
   }
 
-  // Determine redirect URL based on environment
   let redirectUrl;
   if (
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1"
   ) {
-    // For localhost dev environment, just use origin
     redirectUrl = window.location.origin;
   } else {
-    // For GitHub Pages production (includes repository path)
     redirectUrl = window.location.origin + window.location.pathname;
   }
 
@@ -131,17 +129,14 @@ async function checkUserSession() {
 
 // Show the main app after login
 function showUserSection() {
-  // Defensive: if DOM isn't ready yet, wait for it and try again
   const loginSection = document.getElementById("login-section");
   const userSection = document.getElementById("user-section");
   const userEmail = document.getElementById("user-email");
 
   if (!loginSection || !userSection || !userEmail) {
-    // DOM not ready — schedule to run once DOMContentLoaded fires
     document.addEventListener(
       "DOMContentLoaded",
       () => {
-        // call the same function again after DOM is ready
         showUserSection();
       },
       { once: true },
@@ -206,7 +201,6 @@ function renderMap() {
 
   floorPlan.innerHTML = "";
 
-  // Try several possible SVG filenames (spaces vs underscores, with/without ./)
   (async () => {
     const candidates = [
       "map.svg",
@@ -225,14 +219,12 @@ function renderMap() {
           break;
         }
       } catch (e) {
-        // ignore and try next
+        // ignore
       }
     }
 
     if (!svgText) {
-      console.error(
-        "❌ Error loading SVG: none of the candidate files were found",
-      );
+      console.error("❌ Error loading SVG");
       floorPlan.innerHTML =
         '<p style="padding: 20px; text-align: center;">Error loading floor plan.</p>';
       return;
@@ -263,7 +255,6 @@ function renderRooms() {
 
   if (!svgElement) return;
 
-  // Remove old rooms
   svgElement.querySelectorAll(".room-group").forEach((el) => el.remove());
 
   let parentElement = svgElement;
@@ -342,141 +333,300 @@ function subscribeToRoomChanges() {
 
 // Open room modal
 function openRoomModal(room) {
+  console.log("📍 Opening modal for:", room.room_name);
+  currentRoom = room;
   const modal = document.getElementById("room-modal");
-  const statusIcon = document.getElementById("modal-status-icon");
-  
-  // Set room name
-  document.getElementById("modal-room-name").textContent = room.room_name;
-  
-  // Set capacity info
-  document.getElementById("modal-room-capacity").textContent = 
-    `Total capacity: ${room.capacity} seats`;
-  
-  // Calculate occupancy (simplified - you might want to get real data from your API)
-  const occupiedSeats = room.current_status === "occupied" ? Math.floor(room.capacity * 0.7) : 0;
-  document.getElementById("modal-occupancy-info").textContent = 
-    `Currently occupied: ${occupiedSeats}/${room.capacity} seats`;
 
-  if (room.current_status === "occupied") {
-    // Set status with icon
-    document.getElementById("modal-status-text").textContent = "Occupied";
-    statusIcon.className = "legend-color occupied";
-    
-    document.getElementById("modal-actions").innerHTML =
-      '<p style="color: #f44336; font-weight: 500;">This room is currently occupied.</p>';
-  } else {
-    // Set status with icon
-    document.getElementById("modal-status-text").textContent = "Available";
-    statusIcon.className = "legend-color available";
-    
-    document.getElementById("modal-actions").innerHTML =
-      `<button class="btn btn-primary" onclick="showCheckInForm('${room.id}')">Check In (2 hours)</button>`;
+  if (!modal) {
+    console.error("❌ Modal element not found!");
+    return;
+  }
+
+  // Room name
+  const roomNameEl = document.getElementById("modal-room-name");
+  if (roomNameEl) roomNameEl.textContent = room.room_name;
+
+  // Status icon
+  const statusIcon = document.getElementById("modal-status-icon");
+  const statusText = document.getElementById("modal-status-text");
+
+  if (statusIcon && statusText) {
+    if (room.current_status === "occupied") {
+      statusIcon.className = "legend-color occupied";
+      statusText.textContent = "Occupied";
+    } else {
+      statusIcon.className = "legend-color available";
+      statusText.textContent = "Available";
+    }
+  }
+
+  // Capacity
+  const capacityEl = document.getElementById("modal-room-capacity");
+  if (capacityEl)
+    capacityEl.textContent = `Total capacity: ${room.capacity} seats`;
+
+  // Occupancy
+  const occupancyEl = document.getElementById("modal-occupancy-info");
+  if (occupancyEl) {
+    const occupiedSeats =
+      room.current_status === "occupied" ? Math.floor(room.capacity * 0.7) : 0;
+    occupancyEl.textContent = `Currently occupied: ${occupiedSeats}/${room.capacity} seats`;
+  }
+
+  // Clear extra content
+  const extraContent = document.getElementById("extra-content");
+  if (extraContent) {
+    extraContent.innerHTML = "";
+  }
+
+  // Modal actions
+  const modalActions = document.getElementById("modal-actions");
+  if (modalActions) {
+    if (room.current_status === "occupied") {
+      modalActions.innerHTML =
+        '<p style="color: #5c5757; font-weight: 500;">This room is currently occupied.</p>';
+    } else {
+      modalActions.innerHTML = `<button class="btn btn-primary" onclick="showCameraView()">📷 Scan QR Code</button>`;
+    }
   }
 
   modal.classList.add("active");
 }
 
-// Show check-in form
-function showCheckInForm(roomId) {
-  const extraContent = document.getElementById('extra-content');
-  const modalActions = document.getElementById('modal-actions');
-  
-  // Find the room to get its capacity
-  const room = rooms.find(r => r.id === roomId);
-  const capacity = room ? room.capacity : 10; // fallback to 10 if not found
-  
-  // Generate options for seats dropdown
-  let seatOptions = '';
+// Show camera view
+function showCameraView() {
+  console.log("📷 Opening camera...");
+  const extraContent = document.getElementById("extra-content");
+  const modalActions = document.getElementById("modal-actions");
+
+  if (!extraContent) {
+    console.error("❌ extra-content not found");
+    return;
+  }
+
+  extraContent.innerHTML = `
+    <div class="camera-view">
+      <h3>📷 Scan QR Code</h3>
+      <p>Point your camera at the QR code on the room</p>
+      <div class="qr-scanner-container">
+        <video id="qr-video" class="qr-video" playsinline></video>
+        <canvas id="qr-canvas" style="display: none;"></canvas>
+        <div class="qr-scanner-frame"></div>
+      </div>
+      <p style="text-align: center; margin-top: 15px; font-size: 13px; color: #999;">
+        Camera will automatically detect the QR code
+      </p>
+      <button class="btn btn-secondary" onclick="closeCameraView()" style="width: 100%; margin-top: 10px;">Cancel</button>
+    </div>
+  `;
+
+  if (modalActions) {
+    modalActions.style.display = "none";
+  }
+
+  // Load jsQR
+  if (!window.jsQR) {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+    script.onload = () => startQRScanner();
+    document.head.appendChild(script);
+  } else {
+    startQRScanner();
+  }
+}
+
+// Close camera view
+function closeCameraView() {
+  console.log("❌ Closing camera");
+  const video = document.getElementById("qr-video");
+
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach((track) => track.stop());
+  }
+
+  const extraContent = document.getElementById("extra-content");
+  if (extraContent) {
+    extraContent.innerHTML = "";
+  }
+
+  const modalActions = document.getElementById("modal-actions");
+  if (modalActions) {
+    modalActions.style.display = "block";
+  }
+}
+
+// Start QR scanner
+function startQRScanner() {
+  const video = document.getElementById("qr-video");
+  const canvas = document.getElementById("qr-canvas");
+
+  if (!video || !canvas) {
+    console.error("❌ Video/canvas not found");
+    return;
+  }
+
+  navigator.mediaDevices
+    .getUserMedia({ video: { facingMode: "environment" } })
+    .then((stream) => {
+      console.log("✓ Camera access OK");
+      video.srcObject = stream;
+      video.play();
+      scanQRCode(video, canvas, stream);
+    })
+    .catch((err) => {
+      console.error("❌ Camera denied:", err);
+      alert("Camera access required");
+      closeCameraView();
+    });
+}
+
+// Scan QR code
+function scanQRCode(video, canvas, stream) {
+  const ctx = canvas.getContext("2d");
+  let scanning = true;
+
+  const scan = () => {
+    if (!scanning) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = window.jsQR(
+        imageData.data,
+        imageData.width,
+        imageData.height,
+      );
+
+      if (code) {
+        console.log("✓ QR detected:", code.data);
+        scanning = false;
+        stream.getTracks().forEach((track) => track.stop());
+        verifyQRCodeAndShowForm(code.data);
+        return;
+      }
+    }
+
+    requestAnimationFrame(scan);
+  };
+
+  scan();
+}
+
+// Verify QR code
+function verifyQRCodeAndShowForm(qrData) {
+  if (!currentRoom) {
+    alert("No room selected");
+    closeModal();
+    return;
+  }
+
+  console.log("📋 QR Verification:");
+  console.log("  Scanned QR:", qrData);
+  console.log("  Room QR Code Token:", currentRoom.qr_code_token);
+  console.log("  Room Name:", currentRoom.room_name);
+
+  if (currentRoom.qr_code_token === qrData) {
+    console.log("✓ QR matches room");
+    showBookingForm();
+  } else {
+    console.log("❌ QR mismatch - codes don't match");
+    alert("❌ Wrong QR code. Try again.");
+    closeCameraView();
+  }
+}
+
+// Show booking form
+function showBookingForm() {
+  const extraContent = document.getElementById("extra-content");
+  const modalActions = document.getElementById("modal-actions");
+
+  if (!extraContent) {
+    console.error("❌ extra-content not found");
+    return;
+  }
+
+  const capacity = currentRoom.capacity;
+  let seatOptions = "";
   for (let i = 1; i <= capacity; i++) {
     seatOptions += `<option value="${i}">${i}</option>`;
   }
-  
-  if (extraContent) {
-    extraContent.innerHTML = `
-      <div class="checkin-form">
-        <div class="form-group">
-          <label for="group-name">Group Name:</label>
-          <input type="text" id="group-name" placeholder="Enter group name" />
-        </div>
-        <div class="form-group">
-          <label for="seats-needed">Seats:</label>
-          <select id="seats-needed" required>
-            <option value="">Select number of seats</option>
-            ${seatOptions}
-          </select>
-        </div>
-        <div class="form-buttons">
-          <button class="btn btn-primary" onclick="confirmCheckIn('${roomId}')">Check In (2 hours)</button>
-          <button class="btn btn-secondary" onclick="cancelCheckIn('${roomId}')">Cancel</button>
-        </div>
+
+  extraContent.innerHTML = `
+    <div class="checkin-form">
+      <div class="form-group">
+        <label for="group-name">Group Name:</label>
+        <input type="text" id="group-name" placeholder="Enter group name" />
       </div>
-    `;
-  }
-  
-  // Hide the big check-in button
+      <div class="form-group">
+        <label for="seats-needed">Seats:</label>
+        <select id="seats-needed">
+          <option value="">Select number of seats</option>
+          ${seatOptions}
+        </select>
+      </div>
+      <div class="form-buttons">
+        <button class="btn btn-primary" onclick="confirmCheckIn()">Check In (2 hours)</button>
+        <button class="btn btn-secondary" onclick="showCameraView()">↶ Scan Again</button>
+      </div>
+    </div>
+  `;
+
   if (modalActions) {
-    modalActions.style.display = 'none';
+    modalActions.style.display = "none";
   }
 }
 
-// Cancel check-in form
-function cancelCheckIn(roomId) {
-  const extraContent = document.getElementById('extra-content');
-  const modalActions = document.getElementById('modal-actions');
-  
-  if (extraContent) {
-    extraContent.innerHTML = '<!-- Future features can go here -->';
-  }
-  
-  // Show the big check-in button again
-  if (modalActions) {
-    modalActions.style.display = 'block';
-  }
-}
+// Confirm check-in
+async function confirmCheckIn() {
+  const groupName = document.getElementById("group-name").value.trim();
+  const seatsNeeded = document.getElementById("seats-needed").value;
 
-// Confirm check-in with form data
-async function confirmCheckIn(roomId) {
-  const groupName = document.getElementById('group-name').value.trim();
-  const seatsNeeded = document.getElementById('seats-needed').value;
-  
   if (!groupName) {
-    alert('Please enter a group name');
+    alert("Enter group name");
     return;
   }
-  
-  if (!seatsNeeded || seatsNeeded === '') {
-    alert('Please select number of seats needed');
+
+  if (!seatsNeeded) {
+    alert("Select number of seats");
     return;
   }
-  
-  console.log(`🔄 Checking in room ${roomId} for group "${groupName}" with ${seatsNeeded} seats`);
-  
-  // Call the original check-in function
-  await checkIntoRoom(roomId, groupName, seatsNeeded);
+
+  console.log(`✓ Checking in: ${groupName}, ${seatsNeeded} seats`);
+  await checkIntoRoom(currentRoom.id, groupName, seatsNeeded);
 }
 
 // Close modal
 function closeModal() {
-  document.getElementById("room-modal").classList.remove("active");
+  const modal = document.getElementById("room-modal");
+  const video = document.getElementById("qr-video");
+
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach((track) => track.stop());
+  }
+
+  if (modal) {
+    modal.classList.remove("active");
+  }
+  currentRoom = null;
 }
 
-// Check into a room (via Edge Function - restricted to school WiFi + JWT)
-async function checkIntoRoom(roomId, groupName = null, seatsNeeded = null) {
+// Check into room
+async function checkIntoRoom(roomId, groupName, seatsNeeded) {
   if (!currentUser) {
     alert("Not logged in");
     return;
   }
 
-  console.log("🔄 Checking into room:", roomId, groupName ? `for group "${groupName}"` : '', seatsNeeded ? `with ${seatsNeeded} seats` : '');
-
   const SUPABASE_URL = "https://vbyopcolrvujjvdrkueb.supabase.co";
 
-  // Get the current session token
   const {
     data: { session },
   } = await supabaseClient.auth.getSession();
   if (!session) {
-    alert("Session expired. Please log in again.");
+    alert("Session expired");
     return;
   }
 
@@ -489,102 +639,100 @@ async function checkIntoRoom(roomId, groupName = null, seatsNeeded = null) {
       },
       body: JSON.stringify({
         room_id: roomId,
+        group_name: groupName,
+        seats_needed: seatsNeeded,
       }),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Check-in error:", result.error);
       alert(result.error || "Check-in failed");
       return;
     }
 
-    alert("✓ Checked in! You have the room for 2 hours.");
+    alert("✓ Checked in! 2 hours booked.");
     closeModal();
     loadRooms();
   } catch (err) {
-    console.error("❌ Check-in error:", err);
-    alert("Check-in failed: " + err.message);
+    console.error("❌ Error:", err);
+    alert("Check-in failed");
   }
 }
 
 // Update booking timer
 function updateBookingTimer() {
-  const timerElement = document.getElementById('booking-timer');
-  if (!timerElement) return;
+  const timerEl = document.getElementById("booking-timer");
+  if (!timerEl) return;
 
-  // Find any booked rooms with current user
-  const bookedRoom = rooms.find(room => 
-    room.current_status === 'occupied' && 
-    room.booked_by_user_id === (currentUser ? currentUser.id : null)
+  const bookedRoom = rooms.find(
+    (r) =>
+      r.current_status === "occupied" &&
+      r.booked_by_user_id === (currentUser ? currentUser.id : null),
   );
 
   if (bookedRoom && bookedRoom.booking_end_time) {
-    const endTime = new Date(bookedRoom.booking_end_time);
-    const now = new Date();
-    const timeLeft = endTime - now;
+    const timeLeft = new Date(bookedRoom.booking_end_time) - new Date();
 
     if (timeLeft > 0) {
-      const minutes = Math.floor(timeLeft / (1000 * 60));
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      
-      timerElement.textContent = hours > 0 ? 
-        `${hours}:${mins.toString().padStart(2, '0')}` : 
-        `${mins}min`;
-      timerElement.style.color = timeLeft < 15 * 60 * 1000 ? '#d9534f' : '#f0ad4e'; // Red if < 15min
+      const mins = Math.floor(timeLeft / (1000 * 60));
+      const hrs = Math.floor(mins / 60);
+      const min = mins % 60;
+
+      timerEl.textContent =
+        hrs > 0 ? `${hrs}:${min.toString().padStart(2, "0")}` : `${min}min`;
+      timerEl.style.color = timeLeft < 15 * 60 * 1000 ? "#d9534f" : "#f0ad4e";
     } else {
-      timerElement.textContent = 'Expired';
-      timerElement.style.color = '#d9534f';
+      timerEl.textContent = "Expired";
+      timerEl.style.color = "#d9534f";
     }
   } else {
-    timerElement.textContent = '--:--';
-    timerElement.style.color = '#f0ad4e';
+    timerEl.textContent = "--:--";
+    timerEl.style.color = "#f0ad4e";
   }
 }
 
-// Start booking timer interval
+// Start timer
 function startBookingTimerInterval() {
-  if (bookingTimerInterval) {
-    clearInterval(bookingTimerInterval);
-  }
-  bookingTimerInterval = setInterval(updateBookingTimer, 30000); // Update every 30 seconds
+  if (bookingTimerInterval) clearInterval(bookingTimerInterval);
+  bookingTimerInterval = setInterval(updateBookingTimer, 30000);
 }
 
-// Set up event listeners
+// Setup listeners
 function setupEventListeners() {
   const loginBtn = document.getElementById("login-btn");
   const modal = document.getElementById("room-modal");
 
-  if (loginBtn) loginBtn.addEventListener("click", loginWithGoogle);
+  if (loginBtn) {
+    loginBtn.addEventListener("click", loginWithGoogle);
+  }
+
   if (modal) {
     modal.addEventListener("click", (e) => {
       if (e.target.id === "room-modal") closeModal();
     });
   }
 
-  // Setup logout link in navigation
-  document.querySelectorAll('a[href="#logout"]').forEach(link => {
+  document.querySelectorAll('a[href="#logout"]').forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       logout();
     });
   });
 
-  // Setup hamburger menu
   setupHamburgerMenu();
+  console.log("✓ Listeners ready");
 }
 
-// Initialize app when DOM is ready
+// Initialize
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
-    console.log("🚀 Initializing app...");
+    console.log("🚀 Initializing...");
     setupEventListeners();
     initSupabase();
   });
 } else {
-  console.log("🚀 Initializing app...");
+  console.log("🚀 Initializing...");
   setupEventListeners();
   initSupabase();
 }
