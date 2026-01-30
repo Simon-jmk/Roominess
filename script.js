@@ -2,6 +2,8 @@
 let currentUser = null;
 let rooms = [];
 let supabaseClient = null;
+let currentRoom = null; // Track currently opened room
+let qrScanner = null; // QR scanner instance
 
 // Initialize Supabase when page loads
 function initSupabase() {
@@ -333,41 +335,206 @@ function subscribeToRoomChanges() {
     .subscribe();
 }
 
-// Open room modal
+// Open room modal with info view first
 function openRoomModal(room) {
+  currentRoom = room;
   const modal = document.getElementById("room-modal");
   document.getElementById("modal-room-name").textContent = room.room_name;
   document.getElementById("modal-room-capacity").textContent =
     `Capacity: ${room.capacity} seats`;
 
+  // Show info view first
+  document.getElementById("modal-info-view").style.display = "block";
+  document.getElementById("modal-camera-view").style.display = "none";
+  document.getElementById("modal-booking-form-view").style.display = "none";
+
   if (room.current_status === "occupied") {
     document.getElementById("modal-room-status").textContent =
       "Status: Occupied";
-    document.getElementById("modal-actions").innerHTML =
+    document.getElementById("modal-info-actions").innerHTML =
       '<p style="color: #f44336; font-weight: 500;">This room is currently occupied.</p>';
   } else {
     document.getElementById("modal-room-status").textContent =
       "Status: Available";
-    document.getElementById("modal-actions").innerHTML =
-      `<button class="btn btn-primary" onclick="checkIntoRoom('${room.id}')">Check In (2 hours)</button>`;
+    document.getElementById("modal-info-actions").innerHTML =
+      `<button class="btn btn-primary" onclick="showCameraView()">📷 Scan QR Code</button>`;
   }
 
   modal.classList.add("active");
 }
 
-// Close modal
-function closeModal() {
-  document.getElementById("room-modal").classList.remove("active");
+// Show camera view
+function showCameraView() {
+  document.getElementById("modal-info-view").style.display = "none";
+  document.getElementById("modal-camera-view").style.display = "block";
+  document.getElementById("modal-booking-form-view").style.display = "none";
+
+  // Load QR scanner library if not already loaded
+  if (!window.jsQR) {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+    script.onload = () => startQRScanner();
+    document.head.appendChild(script);
+  } else {
+    startQRScanner();
+  }
 }
 
-// Check into a room (via Edge Function - restricted to school WiFi + JWT)
-async function checkIntoRoom(roomId) {
+// Start QR scanner
+function startQRScanner() {
+  const video = document.getElementById("qr-video");
+  const canvas = document.getElementById("qr-canvas");
+
+  if (!video || !canvas) {
+    console.error("❌ Video or canvas element not found");
+    return;
+  }
+
+  // Request camera access
+  navigator.mediaDevices
+    .getUserMedia({
+      video: { facingMode: "environment" },
+    })
+    .then((stream) => {
+      video.srcObject = stream;
+      video.play();
+      scanQRCode(video, canvas, stream);
+    })
+    .catch((err) => {
+      console.error("❌ Camera access denied:", err);
+      alert("Camera access is required to scan QR codes");
+      showCameraView(); // Stay on camera view but show error
+    });
+}
+
+// Scan QR code from video stream
+function scanQRCode(video, canvas, stream) {
+  const ctx = canvas.getContext("2d");
+  let scanning = true;
+
+  const scan = () => {
+    if (!scanning) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = window.jsQR(
+        imageData.data,
+        imageData.width,
+        imageData.height,
+      );
+
+      if (code) {
+        console.log("✓ QR Code detected:", code.data);
+        scanning = false;
+
+        // Stop the camera stream
+        stream.getTracks().forEach((track) => track.stop());
+
+        // Verify QR code matches room
+        verifyQRCodeAndShowForm(code.data);
+        return;
+      }
+    }
+
+    requestAnimationFrame(scan);
+  };
+
+  scan();
+
+  // Store reference for cleanup
+  window.currentQRScanner = {
+    scanning: () => scanning,
+    stop: () => {
+      scanning = false;
+    },
+  };
+}
+
+// Verify QR code matches the room
+function verifyQRCodeAndShowForm(qrData) {
+  if (!currentRoom) {
+    alert("No room selected");
+    closeModal();
+    return;
+  }
+
+  // Debug: log what we're comparing
+  console.log("QR scanned:", qrData);
+  console.log("Room token:", currentRoom.qr_code_token);
+  console.log("Room data:", currentRoom);
+
+  // Check if QR code matches room's QR code from Supabase
+  if (currentRoom.qr_code_token === qrData) {
+    console.log("✓ QR code matches room:", currentRoom.room_name);
+    showBookingForm();
+  } else {
+    alert("❌ QR code does not match this room. Please try again.");
+    showCameraView();
+  }
+}
+
+// Show booking form
+function showBookingForm() {
+  document.getElementById("modal-info-view").style.display = "none";
+  document.getElementById("modal-camera-view").style.display = "none";
+  document.getElementById("modal-booking-form-view").style.display = "block";
+
+  // Reset form
+  document.getElementById("booking-group-name").value = "";
+  document.getElementById("booking-time").value = "120"; // Default to 2 hours (120 minutes)
+  updateTimeDisplay();
+}
+
+// Update time display
+function updateTimeDisplay() {
+  const minutes = parseInt(document.getElementById("booking-time").value);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  let timeStr = "";
+  if (hours > 0) {
+    timeStr += `${hours}h`;
+  }
+  if (mins > 0) {
+    timeStr += ` ${mins}min`;
+  }
+
+  document.getElementById("booking-time-display").textContent =
+    timeStr || "0 min";
+}
+
+// Complete booking
+async function completeBooking() {
+  const groupName = document.getElementById("booking-group-name").value.trim();
+  const time = parseInt(document.getElementById("booking-time").value);
+
+  if (!groupName) {
+    alert("Please enter a group name");
+    return;
+  }
+
+  if (time <= 0 || time > 120) {
+    alert("Please select a valid time (1-120 minutes)");
+    return;
+  }
+
   if (!currentUser) {
     alert("Not logged in");
     return;
   }
 
-  console.log("🔄 Checking into room:", roomId);
+  if (!currentRoom) {
+    alert("No room selected");
+    return;
+  }
+
+  console.log(
+    `🔄 Booking room ${currentRoom.room_name} for ${groupName} (${time} minutes)...`,
+  );
 
   const SUPABASE_URL = "https://vbyopcolrvujjvdrkueb.supabase.co";
 
@@ -388,25 +555,41 @@ async function checkIntoRoom(roomId) {
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        room_id: roomId,
+        room_id: currentRoom.id,
+        group_name: groupName,
+        duration_minutes: time,
       }),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Check-in error:", result.error);
-      alert(result.error || "Check-in failed");
+      console.error("❌ Booking error:", result.error);
+      alert(result.error || "Booking failed");
       return;
     }
 
-    alert("✓ Checked in! You have the room for 2 hours.");
+    alert(`✓ Booked! Room reserved for ${groupName} (${time} minutes)`);
     closeModal();
     loadRooms();
   } catch (err) {
-    console.error("❌ Check-in error:", err);
-    alert("Check-in failed: " + err.message);
+    console.error("❌ Booking error:", err);
+    alert("Booking failed: " + err.message);
   }
+}
+
+// Close modal
+function closeModal() {
+  const modal = document.getElementById("room-modal");
+  const video = document.getElementById("qr-video");
+
+  // Stop camera if running
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach((track) => track.stop());
+  }
+
+  modal.classList.remove("active");
+  currentRoom = null;
 }
 
 // Set up event listeners
@@ -414,6 +597,7 @@ function setupEventListeners() {
   const loginBtn = document.getElementById("login-btn");
   const logoutBtn = document.getElementById("logout-btn");
   const modal = document.getElementById("room-modal");
+  const timeSlider = document.getElementById("booking-time");
 
   if (loginBtn) loginBtn.addEventListener("click", loginWithGoogle);
   if (logoutBtn) logoutBtn.addEventListener("click", logout);
@@ -421,6 +605,9 @@ function setupEventListeners() {
     modal.addEventListener("click", (e) => {
       if (e.target.id === "room-modal") closeModal();
     });
+  }
+  if (timeSlider) {
+    timeSlider.addEventListener("input", updateTimeDisplay);
   }
 
   // Setup hamburger menu

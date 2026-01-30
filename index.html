@@ -4,32 +4,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Roominess</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png" />
     <link rel="stylesheet" href="styles.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Michroma&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <!-- Header -->
     <header>
-        <nav class="navbar">
-            <div class="nav-brand">
-                <img src="logo.png" alt="Roominess Logo">
-                <h1>Roominess</h1>
-            </div>
+      <nav class="navbar">
+        <div class="nav-brand">
+          <img src="logo.png" alt="Roominess Logo" />
+          <h1>Roominess</h1>
+        </div>
 
-            <div class="hamburger">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
-            </div>
+        <div class="hamburger">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </div>
 
-            <ul class="nav-menu">
-                <li><a href="#map">Map</a></li>
-                <li><a href="#booking">Available rooms</a></li>
-                <li><a href="#my-bookings">My bookings</a></li>
-                <li><a href="#status">Status</a></li>
-            </ul>
-        </nav>
+        <ul class="nav-menu">
+          <li><a href="#map">Map</a></li>
+          <li><a href="#booking">Available rooms</a></li>
+          <li><a href="#my-bookings">My bookings</a></li>
+          <li><a href="#status">Status</a></li>
+        </ul>
+      </nav>
     </header>
 
     <!-- Main Content -->
@@ -83,10 +86,103 @@
     <div id="room-modal" class="modal">
       <div class="modal-content">
         <button class="modal-close" onclick="closeModal()">&times;</button>
-        <h2 id="modal-room-name"></h2>
-        <p id="modal-room-status"></p>
-        <p id="modal-room-capacity"></p>
-        <div id="modal-actions"></div>
+
+        <!-- Info View (Room Details) -->
+        <div id="modal-info-view">
+          <h2 id="modal-room-name"></h2>
+          <p id="modal-room-status"></p>
+          <p id="modal-room-capacity"></p>
+          <div id="modal-info-actions"></div>
+        </div>
+
+        <!-- Camera View (QR Scanner) -->
+        <div id="modal-camera-view" style="display: none">
+          <h2>📷 Scan QR Code</h2>
+          <p>Point your camera at the QR code on the room</p>
+          <div class="qr-scanner-container">
+            <video id="qr-video" class="qr-video"></video>
+            <canvas id="qr-canvas" style="display: none"></canvas>
+            <div class="qr-scanner-frame"></div>
+          </div>
+          <p
+            style="
+              text-align: center;
+              margin-top: 15px;
+              font-size: 13px;
+              color: #999;
+            "
+          >
+            Camera will automatically detect the QR code
+          </p>
+          <button
+            class="btn btn-secondary"
+            onclick="closeModal()"
+            style="width: 100%; margin-top: 15px"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <!-- Booking Form View -->
+        <div id="modal-booking-form-view" style="display: none">
+          <h2 id="booking-modal-title">Complete Your Booking</h2>
+          <p style="color: #666; margin-bottom: 20px">
+            Enter your details to complete the booking
+          </p>
+
+          <form
+            id="booking-form"
+            onsubmit="
+              event.preventDefault();
+              completeBooking();
+            "
+          >
+            <div class="form-group">
+              <label for="booking-group-name">Group Name / Your Name</label>
+              <input
+                type="text"
+                id="booking-group-name"
+                placeholder="e.g., Team A / John Doe"
+                required
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="booking-time">Duration</label>
+              <div class="time-control">
+                <input
+                  type="range"
+                  id="booking-time"
+                  min="15"
+                  max="120"
+                  step="15"
+                  value="120"
+                />
+                <div class="time-display" id="booking-time-display">2h</div>
+              </div>
+              <p style="font-size: 12px; color: #999; margin-top: 5px">
+                Maximum 2 hours (120 minutes)
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              style="width: 100%; margin-top: 20px"
+            >
+              ✓ Confirm Booking
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="showCameraView()"
+              style="width: 100%; margin-top: 10px"
+            >
+              ↶ Scan Again
+            </button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -94,6 +190,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Load application script (with cache buster) -->
-    <script src="script.js?v=2.0.0"></script>
+    <script src="script.js?v=3.0.0"></script>
   </body>
 </html>
