@@ -1,99 +1,121 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Roominess</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="stylesheet" href="styles.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <!-- Header -->
-    <header>
-        <nav class="navbar">
-            <div class="nav-brand">
-                <img src="logo.png" alt="Roominess Logo">
-                <h1>Roominess</h1>
-            </div>
 
-            <div class="hamburger">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
-            </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roominess</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+</head>
 
-            <ul class="nav-menu">
-                <li><a href="#map">Map</a></li>
-                <li><a href="#booking">Available rooms</a></li>
-                <li><a href="#my-bookings">My bookings</a></li>
-                <li><a href="#status">Status</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <!-- Main Content -->
-    <main>
-      <!-- Login Section -->
-      <div id="login-section" class="section">
-        <div class="login-container">
-          <h2>Welcome</h2>
-          <p>Sign in to book a room</p>
-          <button id="login-btn" class="btn btn-primary">
-            Sign in with Google
-          </button>
-        </div>
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar">
+      <div class="nav-brand">
+        <img src="logo.png" alt="Roominess Logo">
+        <h1>Roominess</h1>
       </div>
 
-      <!-- User Section -->
-      <div id="user-section" class="section" style="display: none">
-        <!-- User Info Bar -->
-        <div class="user-info">
-          <span>Logged in as: <strong id="user-email"></strong></span>
-          <button id="logout-btn" class="btn btn-danger">Logout</button>
-        </div>
-
-        <!-- Legend -->
-        <div class="legend">
-          <div class="legend-item">
-            <div class="legend-color available"></div>
-            <span>Available</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color occupied"></div>
-            <span>Occupied</span>
-          </div>
-        </div>
-
-        <!-- Floor Plan Container -->
-        <div id="map-container">
-          <div id="floor-plan">
-            <div
-              id="loading"
-              style="display: none; padding: 20px; text-align: center"
-            >
-              Loading rooms...
-            </div>
-          </div>
-        </div>
+      <div class="hamburger">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
       </div>
-    </main>
 
-    <!-- Room Details Modal -->
-    <div id="room-modal" class="modal">
-      <div class="modal-content">
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-        <h2 id="modal-room-name"></h2>
-        <p id="modal-room-status"></p>
-        <p id="modal-room-capacity"></p>
-        <div id="modal-actions"></div>
+      <ul class="nav-menu">
+        <li><a href="#map">Map</a></li>
+        <li><a href="#profile">Profile</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Login Section -->
+    <div id="login-section" class="section">
+      <div class="login-container">
+        <h2>Welcome</h2>
+        <p>Sign in to book a room</p>
+        <button id="login-btn" class="btn btn-primary">
+          Sign in with Google
+        </button>
       </div>
     </div>
 
-    <!-- Load Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- User Section -->
+    <div id="user-section" class="section" style="display: none">
+      <!-- User Info Bar -->
+      <div class="user-info">
+        <span>Logged in as: <strong id="user-email"></strong></span>
+        <button id="logout-btn" class="btn btn-danger">Logout</button>
+      </div>
 
-    <!-- Load application script (with cache buster) -->
-    <script src="script.js?v=2.0.0"></script>
-  </body>
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color available"></div>
+          <span>Available</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color occupied"></div>
+          <span>Occupied</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color booked"></div>
+          <span>Booked</span>
+          <span class="clock-icon">🕐</span>
+          <span id="booking-timer" class="booking-timer">--:--</span>
+        </div>
+      </div>
+
+      <!-- Floor Plan Container -->
+      <div id="map-container">
+        <div id="floor-plan">
+          <div id="loading" style="display: none; padding: 20px; text-align: center">
+            Loading rooms...
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Room Details Modal -->
+  <div id="room-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h2 id="modal-room-name"></h2>
+
+      <div class="modal-status">
+        <div class="status-indicator">
+          <span id="modal-room-status">Status:</span>
+          <div id="modal-status-icon" class="legend-color"></div>
+          <span id="modal-status-text"></span>
+        </div>
+      </div>
+
+      <div class="modal-capacity">
+        <p id="modal-room-capacity"></p>
+        <p id="modal-occupancy-info"></p>
+      </div>
+
+      <div class="modal-extra">
+        <p>Additional booking options:</p>
+        <div id="extra-content" class="extra-content">
+          <!-- Future features can go here -->
+        </div>
+      </div>
+      <div id="modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- Load Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Load application script (with cache buster) -->
+  <script src="script.js?v=2.0.0"></script>
+</body>
+
 </html>

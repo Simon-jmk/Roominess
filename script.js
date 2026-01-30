@@ -2,6 +2,7 @@
 let currentUser = null;
 let rooms = [];
 let supabaseClient = null;
+let bookingTimerInterval = null;
 
 // Initialize Supabase when page loads
 function initSupabase() {
@@ -105,6 +106,10 @@ async function logout() {
     await supabaseClient.auth.signOut();
   }
   currentUser = null;
+  if (bookingTimerInterval) {
+    clearInterval(bookingTimerInterval);
+    bookingTimerInterval = null;
+  }
   const loginSection = document.getElementById("login-section");
   const userSection = document.getElementById("user-section");
   if (loginSection) loginSection.style.display = "block";
@@ -149,6 +154,7 @@ function showUserSection() {
   if (currentUser && currentUser.email)
     userEmail.textContent = currentUser.email;
   loadRooms();
+  startBookingTimerInterval();
 }
 
 // Load rooms from database
@@ -175,6 +181,7 @@ async function loadRooms() {
   console.log("✓ Loaded " + rooms.length + " rooms");
   renderMap();
   subscribeToRoomChanges();
+  updateBookingTimer();
 }
 
 // Render the SVG floor plan
@@ -290,8 +297,8 @@ function renderRooms() {
     circle.setAttribute("cx", room.coordinates_x);
     circle.setAttribute("cy", room.coordinates_y);
     circle.setAttribute("r", "25");
-    circle.setAttribute("fill", isOccupied ? "#f44336" : "#4caf50");
-    circle.setAttribute("stroke", isOccupied ? "#c62828" : "#2e7d32");
+    circle.setAttribute("fill", isOccupied ? "#5c5757" : "#5fb3c7");
+    circle.setAttribute("stroke", isOccupied ? "#3b3838" : "#3f94a9");
     circle.setAttribute("stroke-width", "2");
 
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -336,23 +343,116 @@ function subscribeToRoomChanges() {
 // Open room modal
 function openRoomModal(room) {
   const modal = document.getElementById("room-modal");
+  const statusIcon = document.getElementById("modal-status-icon");
+  
+  // Set room name
   document.getElementById("modal-room-name").textContent = room.room_name;
-  document.getElementById("modal-room-capacity").textContent =
-    `Capacity: ${room.capacity} seats`;
+  
+  // Set capacity info
+  document.getElementById("modal-room-capacity").textContent = 
+    `Total capacity: ${room.capacity} seats`;
+  
+  // Calculate occupancy (simplified - you might want to get real data from your API)
+  const occupiedSeats = room.current_status === "occupied" ? Math.floor(room.capacity * 0.7) : 0;
+  document.getElementById("modal-occupancy-info").textContent = 
+    `Currently occupied: ${occupiedSeats}/${room.capacity} seats`;
 
   if (room.current_status === "occupied") {
-    document.getElementById("modal-room-status").textContent =
-      "Status: Occupied";
+    // Set status with icon
+    document.getElementById("modal-status-text").textContent = "Occupied";
+    statusIcon.className = "legend-color occupied";
+    
     document.getElementById("modal-actions").innerHTML =
       '<p style="color: #f44336; font-weight: 500;">This room is currently occupied.</p>';
   } else {
-    document.getElementById("modal-room-status").textContent =
-      "Status: Available";
+    // Set status with icon
+    document.getElementById("modal-status-text").textContent = "Available";
+    statusIcon.className = "legend-color available";
+    
     document.getElementById("modal-actions").innerHTML =
-      `<button class="btn btn-primary" onclick="checkIntoRoom('${room.id}')">Check In (2 hours)</button>`;
+      `<button class="btn btn-primary" onclick="showCheckInForm('${room.id}')">Check In (2 hours)</button>`;
   }
 
   modal.classList.add("active");
+}
+
+// Show check-in form
+function showCheckInForm(roomId) {
+  const extraContent = document.getElementById('extra-content');
+  const modalActions = document.getElementById('modal-actions');
+  
+  // Find the room to get its capacity
+  const room = rooms.find(r => r.id === roomId);
+  const capacity = room ? room.capacity : 10; // fallback to 10 if not found
+  
+  // Generate options for seats dropdown
+  let seatOptions = '';
+  for (let i = 1; i <= capacity; i++) {
+    seatOptions += `<option value="${i}">${i}</option>`;
+  }
+  
+  if (extraContent) {
+    extraContent.innerHTML = `
+      <div class="checkin-form">
+        <div class="form-group">
+          <label for="group-name">Group Name:</label>
+          <input type="text" id="group-name" placeholder="Enter group name" />
+        </div>
+        <div class="form-group">
+          <label for="seats-needed">Seats:</label>
+          <select id="seats-needed" required>
+            <option value="">Select number of seats</option>
+            ${seatOptions}
+          </select>
+        </div>
+        <div class="form-buttons">
+          <button class="btn btn-primary" onclick="confirmCheckIn('${roomId}')">Check In (2 hours)</button>
+          <button class="btn btn-secondary" onclick="cancelCheckIn('${roomId}')">Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Hide the big check-in button
+  if (modalActions) {
+    modalActions.style.display = 'none';
+  }
+}
+
+// Cancel check-in form
+function cancelCheckIn(roomId) {
+  const extraContent = document.getElementById('extra-content');
+  const modalActions = document.getElementById('modal-actions');
+  
+  if (extraContent) {
+    extraContent.innerHTML = '<!-- Future features can go here -->';
+  }
+  
+  // Show the big check-in button again
+  if (modalActions) {
+    modalActions.style.display = 'block';
+  }
+}
+
+// Confirm check-in with form data
+async function confirmCheckIn(roomId) {
+  const groupName = document.getElementById('group-name').value.trim();
+  const seatsNeeded = document.getElementById('seats-needed').value;
+  
+  if (!groupName) {
+    alert('Please enter a group name');
+    return;
+  }
+  
+  if (!seatsNeeded || seatsNeeded === '') {
+    alert('Please select number of seats needed');
+    return;
+  }
+  
+  console.log(`🔄 Checking in room ${roomId} for group "${groupName}" with ${seatsNeeded} seats`);
+  
+  // Call the original check-in function
+  await checkIntoRoom(roomId, groupName, seatsNeeded);
 }
 
 // Close modal
@@ -361,13 +461,13 @@ function closeModal() {
 }
 
 // Check into a room (via Edge Function - restricted to school WiFi + JWT)
-async function checkIntoRoom(roomId) {
+async function checkIntoRoom(roomId, groupName = null, seatsNeeded = null) {
   if (!currentUser) {
     alert("Not logged in");
     return;
   }
 
-  console.log("🔄 Checking into room:", roomId);
+  console.log("🔄 Checking into room:", roomId, groupName ? `for group "${groupName}"` : '', seatsNeeded ? `with ${seatsNeeded} seats` : '');
 
   const SUPABASE_URL = "https://vbyopcolrvujjvdrkueb.supabase.co";
 
@@ -407,6 +507,49 @@ async function checkIntoRoom(roomId) {
     console.error("❌ Check-in error:", err);
     alert("Check-in failed: " + err.message);
   }
+}
+
+// Update booking timer
+function updateBookingTimer() {
+  const timerElement = document.getElementById('booking-timer');
+  if (!timerElement) return;
+
+  // Find any booked rooms with current user
+  const bookedRoom = rooms.find(room => 
+    room.current_status === 'occupied' && 
+    room.booked_by_user_id === (currentUser ? currentUser.id : null)
+  );
+
+  if (bookedRoom && bookedRoom.booking_end_time) {
+    const endTime = new Date(bookedRoom.booking_end_time);
+    const now = new Date();
+    const timeLeft = endTime - now;
+
+    if (timeLeft > 0) {
+      const minutes = Math.floor(timeLeft / (1000 * 60));
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      
+      timerElement.textContent = hours > 0 ? 
+        `${hours}:${mins.toString().padStart(2, '0')}` : 
+        `${mins}min`;
+      timerElement.style.color = timeLeft < 15 * 60 * 1000 ? '#d9534f' : '#f0ad4e'; // Red if < 15min
+    } else {
+      timerElement.textContent = 'Expired';
+      timerElement.style.color = '#d9534f';
+    }
+  } else {
+    timerElement.textContent = '--:--';
+    timerElement.style.color = '#f0ad4e';
+  }
+}
+
+// Start booking timer interval
+function startBookingTimerInterval() {
+  if (bookingTimerInterval) {
+    clearInterval(bookingTimerInterval);
+  }
+  bookingTimerInterval = setInterval(updateBookingTimer, 30000); // Update every 30 seconds
 }
 
 // Set up event listeners
