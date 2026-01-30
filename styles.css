@@ -11,6 +11,7 @@
 body {
   font-family: 'Michroma', sans-serif;
   line-height: 1.6;
+  background: #ccc;
 }
 
 main {
@@ -38,70 +39,70 @@ header h1 {
 
 /* Navigation styling */
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    background-color: #333;
-    color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #333;
+  color: white;
 }
 
 .nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .nav-brand img {
-    height: 60px;
-    width: auto;
+  height: 60px;
+  width: auto;
 }
 
 .nav-brand h1 {
-    color: #5fb3c7;
-    font-size: 1.5rem;
+  color: #5fb3c7;
+  font-size: 1.5rem;
 }
 
 .nav-menu {
-    display: flex;
-    list-style: none;
-    gap: 2rem;
+  display: flex;
+  list-style: none;
+  gap: 2rem;
 }
 
 .nav-menu li a {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .nav-menu li a:hover {
-    color: #5fb3c7;
+  color: #5fb3c7;
 }
 
 /* Hamburger menu styling */
 .hamburger {
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    cursor: pointer;
-    padding: 5px;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  padding: 5px;
 }
 
 .bar {
-    width: 25px;
-    height: 3px;
-    background-color: white;
-    margin: 2px 0;
-    transition: all 0.3s ease;
-    transform-origin: center;
+  width: 25px;
+  height: 3px;
+  background-color: white;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+  transform-origin: center;
 }
 
 /* Main content */
 main {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* ========================================
@@ -110,71 +111,71 @@ main {
 
 /* Tablet (768px - 1024px) */
 @media(max-width: 1024px) and (min-width: 769px) {
-    .navbar {
-        padding: 1rem 1.5rem;
-    }
-    
-    .nav-brand h1 {
-        font-size: 1.3rem;
-    }
-    
-    .nav-menu {
-        gap: 1.5rem;
-    }
-    
-    .nav-menu li a {
-        font-size: 0.9rem;
-    }
+  .navbar {
+    padding: 1rem 1.5rem;
+  }
+
+  .nav-brand h1 {
+    font-size: 1.3rem;
+  }
+
+  .nav-menu {
+    gap: 1.5rem;
+  }
+
+  .nav-menu li a {
+    font-size: 0.9rem;
+  }
 }
 
 /* Mobile (768px <) */
 @media(max-width: 768px) {
-    .navbar {
-        padding: 1rem;
-    }
+  .navbar {
+    padding: 1rem;
+  }
 
-    .nav-brand h1 {
-        font-size: 1.2rem;
-    }
+  .nav-brand h1 {
+    font-size: 1.2rem;
+  }
 
-    .nav-brand img {
-        height: 45px;
-    }
+  .nav-brand img {
+    height: 45px;
+  }
 
-    .hamburger {
-        display: flex;
-    }
+  .hamburger {
+    display: flex;
+  }
 
-    .nav-menu {
-        position: fixed;
-        left: -100%;
-        top: 70px;
-        flex-direction: column;
-        background-color: #333;
-        width: 100%;
-        text-align: center;
-        transition: 0.3s;
-        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
-        padding: 2rem 0;
-        gap: 1rem;
-        z-index: 1000;
-    }
+  .nav-menu {
+    position: fixed;
+    left: -100%;
+    top: 70px;
+    flex-direction: column;
+    background-color: #333;
+    width: 100%;
+    text-align: center;
+    transition: 0.3s;
+    box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
+    padding: 2rem 0;
+    gap: 1rem;
+    z-index: 1000;
+  }
 
-    .nav-menu.active {
-        left: 0;
-    }
+  .nav-menu.active {
+    left: 0;
+  }
 
-    .hamburger.active .bar:nth-child(2) {
-        opacity: 0;
-    }
+  .hamburger.active .bar:nth-child(2) {
+    opacity: 0;
+  }
 
-    .hamburger.active .bar:nth-child(1) {
-        transform: translateY(7px) rotate(45deg);
-    }
+  .hamburger.active .bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
 
-    .hamburger.active .bar:nth-child(3) {
-        transform: translateY(-7px) rotate(-45deg);
-    }
+  .hamburger.active .bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
 }
 
 /* ========================================
@@ -201,21 +202,21 @@ main {
 }
 
 .btn-primary {
-  background: #4285f4;
+  background: #5fb3c7;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #3367d6;
+  background: #333;
 }
 
 .btn-danger {
-  background: #dc3545;
+  background: #333;
   color: white;
 }
 
 .btn-danger:hover {
-  background: #c82333;
+  background: #5fb3c7;
 }
 
 /* ========================================
@@ -311,6 +312,7 @@ main {
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  position: sticky;
 }
 
 .legend-item {
@@ -321,6 +323,18 @@ main {
   color: #666;
 }
 
+.clock-icon {
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.booking-timer {
+  font-weight: 600;
+  color: #f0ad4e;
+  font-size: 13px;
+  min-width: 40px;
+}
+
 .legend-color {
   width: 20px;
   height: 20px;
@@ -329,13 +343,18 @@ main {
 }
 
 .legend-color.available {
-  background: #4caf50;
-  border-color: #2e7d32;
+  background: #5fb3c7;
+  border-color: #3f94a9;
 }
 
 .legend-color.occupied {
-  background: #f44336;
-  border-color: #c62828;
+  background: #5c5757;
+  border-color: #3b3838;
+}
+
+.legend-color.booked {
+  background: #f0ad4e;
+  border-color: #d4882a;
 }
 
 /* ========================================
@@ -420,8 +439,138 @@ main {
 
 .modal-content h2 {
   font-size: 24px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   color: #333;
+}
+
+.modal-status {
+  margin-bottom: 8px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator #modal-status-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.status-indicator #modal-status-icon.available {
+  background: #5fb3c7;
+  border-color: #3f94a9;
+}
+
+.status-indicator #modal-status-icon.occupied {
+  background: #5c5757;
+  border-color: #3b3838;
+}
+
+.modal-capacity {
+  margin-bottom: 20px;
+}
+
+.modal-capacity p:first-child {
+  margin-bottom: 2px;
+}
+
+.modal-capacity p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.modal-extra {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal-extra p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.extra-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  background: #f5f5f5;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #999;
+  padding: 15px;
+}
+
+.checkin-form {
+  width: 100%;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #333;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #5fb3c7;
+  box-shadow: 0 0 0 2px rgba(95, 179, 199, 0.2);
+}
+
+.form-group select option[value=""] {
+  color: #999;
+}
+
+.form-group select:invalid {
+  color: #999;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.form-buttons .btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+  margin: 0;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #333;
 }
 
 .modal-content p {
@@ -506,11 +655,27 @@ main {
 
   .legend {
     padding: 10px 15px;
-    gap: 15px;
+    gap: 12px;
   }
 
   .legend-item {
-    font-size: 13px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .legend-color {
+    width: 16px;
+    height: 16px;
+  }
+
+  .clock-icon {
+    font-size: 14px;
+    margin-left: 4px;
+  }
+
+  .booking-timer {
+    font-size: 11px;
+    min-width: 35px;
   }
 
   .btn {
@@ -533,9 +698,6 @@ main {
 }
 
 @media (max-width: 480px) {
-  header {
-    padding: 10px 15px;
-  }
 
   header h1 {
     font-size: 16px;
@@ -557,7 +719,27 @@ main {
 
   .legend {
     padding: 8px 10px;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .legend-item {
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .legend-color {
+    width: 14px;
+    height: 14px;
+  }
+
+  .clock-icon {
+    font-size: 12px;
+    margin-left: 3px;
+  }
+
+  .booking-timer {
+    font-size: 10px;
+    min-width: 30px;
   }
 
   .btn {
@@ -571,6 +753,7 @@ main {
    ======================================== */
 
 @media print {
+
   header,
   .user-info,
   .legend,
