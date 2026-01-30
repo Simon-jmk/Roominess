@@ -322,7 +322,7 @@ function closeModal() {
   document.getElementById("room-modal").classList.remove("active");
 }
 
-// Check into a room
+// Check into a room (via Edge Function - restricted to school WiFi + JWT)
 async function checkIntoRoom(roomId) {
   if (!currentUser) {
     alert("Not logged in");
@@ -331,25 +331,42 @@ async function checkIntoRoom(roomId) {
 
   console.log("🔄 Checking into room:", roomId);
 
-  const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 2);
+  const SUPABASE_URL = "https://vbyopcolrvujjvdrkueb.supabase.co";
 
-  const { error } = await supabaseClient.from("occupancies").insert({
-    room_id: roomId,
-    user_id: currentUser.id,
-    expires_at: expiresAt.toISOString(),
-    status: "active",
-  });
-
-  if (error) {
-    console.error("❌ Check-in error:", error);
-    alert("Check-in failed: " + error.message);
+  // Get the current session token
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    alert("Session expired. Please log in again.");
     return;
   }
 
-  alert("✓ Checked in! You have the room for 2 hours.");
-  closeModal();
-  loadRooms();
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/check-in`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        room_id: roomId,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Check-in error:", result.error);
+      alert(result.error || "Check-in failed");
+      return;
+    }
+
+    alert("✓ Checked in! You have the room for 2 hours.");
+    closeModal();
+    loadRooms();
+  } catch (err) {
+    console.error("❌ Check-in error:", err);
+    alert("Check-in failed: " + err.message);
+  }
 }
 
 // Set up event listeners
