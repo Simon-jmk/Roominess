@@ -40,23 +40,25 @@ function setupAuthListeners() {
 
 // Hamburger
 function setupHamburgerMenu() {
-    const hamburger = document.querySelector('.hamburger');
-    const navMenu = document.querySelector('.nav-menu');
+  const hamburger = document.querySelector(".hamburger");
+  const navMenu = document.querySelector(".nav-menu");
 
-    if (!hamburger || !navMenu) {
-        console.error('❌ Hamburger or nav menu not found');
-        return;
-    }
+  if (!hamburger || !navMenu) {
+    console.error("❌ Hamburger or nav menu not found");
+    return;
+  }
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navMenu.classList.toggle('active');
-    });
+  hamburger.addEventListener("click", () => {
+    hamburger.classList.toggle("active");
+    navMenu.classList.toggle("active");
+  });
 
-    document.querySelectorAll('.nav-menu li a').forEach(n => n.addEventListener('click', () => {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    }));
+  document.querySelectorAll(".nav-menu li a").forEach((n) =>
+    n.addEventListener("click", () => {
+      hamburger.classList.remove("active");
+      navMenu.classList.remove("active");
+    }),
+  );
 }
 
 // Login with Google
@@ -67,8 +69,20 @@ async function loginWithGoogle() {
     return;
   }
 
-  // Use full URL (origin + path) for GitHub Pages subpath
-  const redirectUrl = window.location.origin + window.location.pathname;
+  // Determine redirect URL based on environment
+  let redirectUrl;
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    // For localhost dev environment, just use origin
+    redirectUrl = window.location.origin;
+  } else {
+    // For GitHub Pages production (includes repository path)
+    redirectUrl = window.location.origin + window.location.pathname;
+  }
+
+  console.log("🔄 Redirect URL:", redirectUrl);
 
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: "google",
@@ -358,7 +372,9 @@ async function checkIntoRoom(roomId) {
   const SUPABASE_URL = "https://vbyopcolrvujjvdrkueb.supabase.co";
 
   // Get the current session token
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
   if (!session) {
     alert("Session expired. Please log in again.");
     return;
@@ -369,7 +385,7 @@ async function checkIntoRoom(roomId) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         room_id: roomId,
