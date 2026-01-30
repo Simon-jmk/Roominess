@@ -1,87 +1,79 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Supabase Test Clean</title>
-</head>
-<body>
-  <h1>Chas Room Booking - Tester1</h1>
-  
-  <div id="login-section">
-    <button id="login-btn">Sign in with Google</button>
-  </div>
-  
-  <div id="user-section" style="display:none;">
-    <p>Logged in as: <span id="user-email"></span></p>
-    <button id="load-rooms-btn">Load Rooms</button>
-    <button id="logout-btn">Logout</button>
-    <div id="rooms"></div>
-  </div>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chas Room Booking</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <h1>Chas Academy - Room Booking</h1>
+    </header>
 
-  <!-- Load Supabase AFTER body content -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <script>
-    // Wait for Supabase to load
-    window.addEventListener('load', function() {
-      const SUPABASE_URL = 'https://vbyopcolrvujjvdrkueb.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZieW9wY29scnZ1amp2ZHJrdWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2OTYyNDQsImV4cCI6MjA4NTI3MjI0NH0.zv5mNlYwABz_UWO5P5Gf8a5pAUt9JKueLg017Gc59RE';
-      
-      console.log('Creating Supabase client...');
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log('Supabase client created successfully');
+    <!-- Main Content -->
+    <main>
+      <!-- Login Section -->
+      <div id="login-section" class="section">
+        <div class="login-container">
+          <h2>Welcome</h2>
+          <p>Sign in to book a room</p>
+          <button id="login-btn" class="btn btn-primary">
+            Sign in with Google
+          </button>
+        </div>
+      </div>
 
-      // Check session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) showUser(session.user);
-      });
+      <!-- User Section -->
+      <div id="user-section" class="section" style="display: none">
+        <!-- User Info Bar -->
+        <div class="user-info">
+          <span>Logged in as: <strong id="user-email"></strong></span>
+          <button id="logout-btn" class="btn btn-danger">Logout</button>
+        </div>
 
-      // Login
-      document.getElementById('login-btn').addEventListener('click', async () => {
-        console.log('Login clicked');
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            queryParams: { hd: 'chasacademy.se' },
-            redirectTo: window.location.origin
-          }
-        });
-        if (error) console.error('Error:', error);
-      });
+        <!-- Legend -->
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color available"></div>
+            <span>Available</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color occupied"></div>
+            <span>Occupied</span>
+          </div>
+        </div>
 
-      // Logout
-      document.getElementById('logout-btn').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        location.reload();
-      });
+        <!-- Floor Plan Container -->
+        <div id="map-container">
+          <div id="floor-plan">
+            <div
+              id="loading"
+              style="display: none; padding: 20px; text-align: center"
+            >
+              Loading rooms...
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
 
-      // Load rooms
-      document.getElementById('load-rooms-btn').addEventListener('click', async () => {
-        const { data, error } = await supabase.from('room_status').select('*');
-        if (error) {
-          alert('Error: ' + error.message);
-        } else {
-          document.getElementById('rooms').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-        }
-      });
+    <!-- Room Details Modal -->
+    <div id="room-modal" class="modal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <h2 id="modal-room-name"></h2>
+        <p id="modal-room-status"></p>
+        <p id="modal-room-capacity"></p>
+        <div id="modal-actions"></div>
+      </div>
+    </div>
 
-      // Show user
-      function showUser(user) {
-        if (!user.email.endsWith('@chasacademy.se')) {
-          alert('Only @chasacademy.se emails allowed!');
-          supabase.auth.signOut();
-          return;
-        }
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('user-section').style.display = 'block';
-        document.getElementById('user-email').textContent = user.email;
-      }
+    <!-- Load Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      // Auth changes
-      supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN') showUser(session.user);
-      });
-    });
-  </script>
-</body>
+    <!-- Load application script (with cache buster) -->
+    <script src="script.js?v=2.0.0"></script>
+  </body>
 </html>
