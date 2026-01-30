@@ -11,6 +11,7 @@
       rel="stylesheet"
     />
   </head>
+
   <body>
     <!-- Header -->
     <header>
@@ -28,9 +29,8 @@
 
         <ul class="nav-menu">
           <li><a href="#map">Map</a></li>
-          <li><a href="#booking">Available rooms</a></li>
-          <li><a href="#my-bookings">My bookings</a></li>
-          <li><a href="#status">Status</a></li>
+          <li><a href="#profile">Profile</a></li>
+          <li><a href="#logout">Log Out</a></li>
         </ul>
       </nav>
     </header>
@@ -53,7 +53,6 @@
         <!-- User Info Bar -->
         <div class="user-info">
           <span>Logged in as: <strong id="user-email"></strong></span>
-          <button id="logout-btn" class="btn btn-danger">Logout</button>
         </div>
 
         <!-- Legend -->
@@ -65,6 +64,12 @@
           <div class="legend-item">
             <div class="legend-color occupied"></div>
             <span>Occupied</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color booked"></div>
+            <span>Booked</span>
+            <span class="clock-icon">🕐</span>
+            <span id="booking-timer" class="booking-timer">--:--</span>
           </div>
         </div>
 
@@ -86,102 +91,29 @@
     <div id="room-modal" class="modal">
       <div class="modal-content">
         <button class="modal-close" onclick="closeModal()">&times;</button>
+        <h2 id="modal-room-name"></h2>
 
-        <!-- Info View (Room Details) -->
-        <div id="modal-info-view">
-          <h2 id="modal-room-name"></h2>
-          <p id="modal-room-status"></p>
-          <p id="modal-room-capacity"></p>
-          <div id="modal-info-actions"></div>
-        </div>
-
-        <!-- Camera View (QR Scanner) -->
-        <div id="modal-camera-view" style="display: none">
-          <h2>📷 Scan QR Code</h2>
-          <p>Point your camera at the QR code on the room</p>
-          <div class="qr-scanner-container">
-            <video id="qr-video" class="qr-video"></video>
-            <canvas id="qr-canvas" style="display: none"></canvas>
-            <div class="qr-scanner-frame"></div>
+        <div class="modal-status">
+          <div class="status-indicator">
+            <span id="modal-room-status">Status:</span>
+            <div id="modal-status-icon" class="legend-color"></div>
+            <span id="modal-status-text"></span>
           </div>
-          <p
-            style="
-              text-align: center;
-              margin-top: 15px;
-              font-size: 13px;
-              color: #999;
-            "
-          >
-            Camera will automatically detect the QR code
-          </p>
-          <button
-            class="btn btn-secondary"
-            onclick="closeModal()"
-            style="width: 100%; margin-top: 15px"
-          >
-            Cancel
-          </button>
         </div>
 
-        <!-- Booking Form View -->
-        <div id="modal-booking-form-view" style="display: none">
-          <h2 id="booking-modal-title">Complete Your Booking</h2>
-          <p style="color: #666; margin-bottom: 20px">
-            Enter your details to complete the booking
-          </p>
+        <div class="modal-capacity">
+          <p id="modal-room-capacity"></p>
+          <p id="modal-occupancy-info"></p>
+        </div>
 
-          <form
-            id="booking-form"
-            onsubmit="
-              event.preventDefault();
-              completeBooking();
-            "
-          >
-            <div class="form-group">
-              <label for="booking-group-name">Group Name / Your Name</label>
-              <input
-                type="text"
-                id="booking-group-name"
-                placeholder="e.g., Team A / John Doe"
-                required
-                autocomplete="off"
-              />
-            </div>
+        <div class="modal-extra">
+          <div id="extra-content" class="extra-content">
+            <!-- Camera and form go here -->
+          </div>
+        </div>
 
-            <div class="form-group">
-              <label for="booking-time">Duration</label>
-              <div class="time-control">
-                <input
-                  type="range"
-                  id="booking-time"
-                  min="15"
-                  max="120"
-                  step="15"
-                  value="120"
-                />
-                <div class="time-display" id="booking-time-display">2h</div>
-              </div>
-              <p style="font-size: 12px; color: #999; margin-top: 5px">
-                Maximum 2 hours (120 minutes)
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              class="btn btn-primary"
-              style="width: 100%; margin-top: 20px"
-            >
-              ✓ Confirm Booking
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              onclick="showCameraView()"
-              style="width: 100%; margin-top: 10px"
-            >
-              ↶ Scan Again
-            </button>
-          </form>
+        <div id="modal-actions">
+          <!-- Scan button goes here -->
         </div>
       </div>
     </div>
@@ -189,7 +121,7 @@
     <!-- Load Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Load application script (with cache buster) -->
-    <script src="script.js?v=3.0.0"></script>
+    <!-- Load application script -->
+    <script src="script.js?v=4.0.0"></script>
   </body>
 </html>
