@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner</title>
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; padding: 1rem; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+        
+        #canvas {
+            width: 100%;
+            height: 400px;
+            border: 3px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background: #000;
+            margin: 1rem 0;
+            display: block;
+        }
+
+        .result-box { background: #ecfdf5; border-left: 4px solid #10b981; padding: 1rem; border-radius: 0.75rem; margin: 1rem 0; }
+        .result-label { font-size: 0.8rem; color: #047857; margin-bottom: 0.5rem; }
+        .result-value { font-size: 1rem; font-family: monospace; color: #0b5345; word-break: break-all; }
+        
+        .status-box { background: #f1f5f9; padding: 1rem; border-radius: 0.75rem; margin: 1rem 0; }
+        .status-item { font-size: 0.9rem; color: #475569; margin: 0.5rem 0; }
+        .status-value { font-weight: 600; color: #059669; }
+        
+        button { width: 100%; padding: 1rem; border: none; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 0.5rem; }
+        .btn-test { background: #f59e0b; color: white; }
+        .btn-start { background: #10b981; color: white; }
+        .btn-stop { background: #ef4444; color: white; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .error { background: #fef2f2; color: #dc2626; padding: 0.75rem; border-radius: 0.75rem; margin-top: 1rem; border-left: 4px solid #dc2626; }
+        .success { background: #ecfdf5; color: #047857; padding: 0.75rem; border-radius: 0.75rem; margin-top: 1rem; border-left: 4px solid #10b981; }
+        
+        .debug { background: #f0f4f8; padding: 0.75rem; border-radius: 0.75rem; margin-top: 1rem; font-size: 0.7rem; color: #475569; font-family: monospace; max-height: 150px; overflow-y: auto; }
+        .debug div { margin: 0.25rem 0; padding: 0.25rem; border-bottom: 1px solid #e5e7eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 QR Scanner</h1>
+        
+        <!-- Canvas for camera feed -->
+        <canvas id="canvas"></canvas>
+
+        <!-- Result -->
+        <div class="result-box">
+            <div class="result-label">Scanned ID:</div>
+            <div class="result-value" id="scanned-id">--</div>
+        </div>
+
+        <!-- Status -->
+        <div class="status-box">
+            <div class="status-item">Status: <span class="status-value" id="status">Ready</span></div>
+            <div class="status-item" id="message">Press button to start</div>
+        </div>
+
+        <!-- Buttons -->
+        <button class="btn-test" onclick="testCamera()">🧪 Test Camera</button>
+        <button id="start-btn" class="btn-start">📱 Start Scanner</button>
+        <button id="stop-btn" class="btn-stop" style="display: none;">⏹️ Stop Scanner</button>
+        
+        <!-- Messages -->
+        <div id="error-box"></div>
+        <div id="debug-box" class="debug"></div>
+    </div>
+
+    <script>
+        // Polyfill
+        if (!navigator.mediaDevices) {
+            navigator.mediaDevices = {};
+        }
+        if (!navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia = function(constraints) {
+                const getUserMedia = 
+                    navigator.getUserMedia ||
+                    navigator.webkitGetUserMedia ||
+                    navigator.mozGetUserMedia ||
+                    navigator.msGetUserMedia;
+                if (!getUserMedia) {
+                    return Promise.reject(new Error('getUserMedia not supported'));
+                }
+                return new Promise((resolve, reject) => {
+                    getUserMedia.call(navigator, constraints, resolve, reject);
+                });
+            };
+        }
+
+        const BACKEND_URL = "http://10.100.3.138:4000";
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const scannedIdEl = document.getElementById("scanned-id");
+        const statusEl = document.getElementById("status");
+        const messageEl = document.getElementById("message");
+        const startBtn = document.getElementById("start-btn");
+        const stopBtn = document.getElementById("stop-btn");
+        const errorBox = document.getElementById("error-box");
+        const debugBox = document.getElementById("debug-box");
+
+        let stream = null;
+        let scanning = false;
+        let video = null;
+
+        function log(msg) {
+            console.log(msg);
+            debugBox.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${msg}</div>`;
+            debugBox.scrollTop = debugBox.scrollHeight;
+        }
+
+        function setStatus(status, message) {
+            statusEl.textContent = status;
+            messageEl.textContent = message;
+        }
+
+        function showError(msg) {
+            errorBox.innerHTML = `<div class="error">❌ ${msg}</div>`;
+            log(`ERROR: ${msg}`);
+        }
+
+        function showSuccess(msg) {
+            errorBox.innerHTML = `<div class="success">✅ ${msg}</div>`;
+            log(`SUCCESS: ${msg}`);
+        }
+
+        async function testCamera() {
+            log("Testing camera...");
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }
+                });
+                log(`✅ Camera permission granted`);
+                s.getTracks().forEach(track => track.stop());
+                showSuccess("Camera works!");
+                setStatus("ready", "Tap Start Scanner");
+                return true;
+            } catch (err) {
+                showError(`Camera Failed: ${err.message}`);
+                return false;
+            }
+        }
+
+        async function startScanning() {
+            log("=== STARTING SCANNER ===");
+            startBtn.style.display = "none";
+            stopBtn.style.display = "block";
+            errorBox.innerHTML = "";
+            setStatus("scanning", "Opening camera...");
+
+            try {
+                // Set canvas size
+                canvas.width = 640;
+                canvas.height = 480;
+                log(`Canvas size: ${canvas.width}x${canvas.height}`);
+
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                log(`✅ Stream obtained`);
+
+                // Create video element (hidden)
+                video = document.createElement("video");
+                video.srcObject = stream;
+                video.play();
+                log(`✅ Video created and playing`);
+
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    log(`✅ Video ready: ${video.videoWidth}x${video.videoHeight}`);
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    setStatus("scanning", "Point at QR code");
+                    showSuccess("Camera is active!");
+                    scanning = true;
+                    scanLoop();
+                };
+
+            } catch (err) {
+                log(`❌ Error: ${err.message}`);
+                showError(`Camera Error: ${err.message}`);
+                stopBtn.style.display = "none";
+                startBtn.style.display = "block";
+                setStatus("error", err.message);
+            }
+        }
+
+        function scanLoop() {
+            if (!scanning || !video) return;
+
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Get image data and scan for QR
+            try {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    log(`✅ QR DETECTED: ${code.data}`);
+                    scannedIdEl.textContent = code.data;
+                    showSuccess(`Scanned: ${code.data}`);
+                    scanning = false;
+                    stopScanning();
+                    confirmQr(code.data);
+                    return;
+                }
+            } catch (err) {
+                // Ignore scan errors
+            }
+
+            requestAnimationFrame(scanLoop);
+        }
+
+        function stopScanning() {
+            log("Stopping scanner...");
+            scanning = false;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (video) {
+                video.srcObject = null;
+                video = null;
+            }
+            stopBtn.style.display = "none";
+            startBtn.style.display = "block";
+            setStatus("stopped", "Scanner stopped");
+        }
+
+        async function confirmQr(qrText) {
+            try {
+                log(`Sending to backend: ${BACKEND_URL}/qr/confirm`);
+                setStatus("authenticating", "Verifying...");
+
+                const res = await fetch(`${BACKEND_URL}/qr/confirm`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token: qrText })
+                });
+
+                const data = await res.json();
+                log(`Response: ${JSON.stringify(data)}`);
+
+                if (data.status === "approved") {
+                    setStatus("approved", `✅ ${data.userId}`);
+                    showSuccess(`Authenticated: ${data.userId}`);
+                } else {
+                    setStatus("error", "Invalid QR");
+                    showError("QR is not valid or expired");
+                }
+            } catch (err) {
+                log(`Backend error: ${err.message}`);
+                showError(`Error: ${err.message}`);
+            }
+        }
+
+        startBtn.onclick = startScanning;
+        stopBtn.onclick = stopScanning;
+
+        log("✅ Page loaded");
+        setStatus("ready", "Tap Test Camera");
+    </script>
+</body>
+</html>

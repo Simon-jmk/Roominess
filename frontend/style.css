@@ -1,0 +1,133 @@
+:root {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #111827;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 400px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.5rem;
+}
+
+.text-muted {
+  color: #6b7280;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+#video {
+  width: 100%;
+  max-width: 320px;
+  height: 240px;
+  border-radius: 1rem;
+  border: 3px solid #e5e7eb;
+  object-fit: cover;
+}
+
+.result-box {
+  background: #f0f9ff;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  border-left: 4px solid #0ea5e9;
+}
+
+.result-label {
+  font-size: 0.8rem;
+  color: #0c4a6e;
+  margin-bottom: 0.25rem;
+}
+
+#scanned-id {
+  font-size: 0.95rem;
+  font-family: monospace;
+  color: #0369a1;
+  word-break: break-all;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.status-box {
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.status-line {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.status-value {
+  color: #059669;
+  text-transform: capitalize;
+}
+
+.status-message {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.primary-btn, .secondary-btn {
+  flex: 1;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+.secondary-btn {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.primary-btn:disabled, .secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    max-width: 450px;
+  }
+}
