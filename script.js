@@ -405,6 +405,14 @@ function showCheckInForm(roomId) {
             ${seatOptions}
           </select>
         </div>
+        <div class="form-group">
+          <label for="mood">Mood:</label>
+          <select id="mood">
+            <option value="focused">Do not disturb</option>
+            <option value="collaborative">Dont mind company!</option>
+            <option value="relaxed">Join, but shhhh</option>
+          </select>
+        </div>
         <div class="form-buttons">
           <button class="btn btn-primary" onclick="confirmCheckIn('${roomId}')">Check In (2 hours)</button>
           <button class="btn btn-secondary" onclick="cancelCheckIn('${roomId}')">Cancel</button>
