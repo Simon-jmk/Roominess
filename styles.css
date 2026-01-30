@@ -9,7 +9,7 @@
 }
 
 body {
-  font-family: 'Michroma', sans-serif;
+  font-family: "Michroma", sans-serif;
   line-height: 1.6;
   background: #ccc;
 }
@@ -110,7 +110,7 @@ main {
    ======================================== */
 
 /* Tablet (768px - 1024px) */
-@media(max-width: 1024px) and (min-width: 769px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .navbar {
     padding: 1rem 1.5rem;
   }
@@ -129,7 +129,7 @@ main {
 }
 
 /* Mobile (768px <) */
-@media(max-width: 768px) {
+@media (max-width: 768px) {
   .navbar {
     padding: 1rem;
   }
@@ -210,6 +210,15 @@ main {
   background: #333;
 }
 
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #333;
+}
+
 .btn-danger {
   background: #333;
   color: white;
@@ -236,7 +245,6 @@ main {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
 }
 
@@ -423,6 +431,7 @@ main {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal.active {
@@ -437,6 +446,18 @@ main {
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-content h2 {
@@ -489,13 +510,13 @@ main {
 
 .modal-extra {
   margin-bottom: 20px;
-  text-align: center;
 }
 
 .modal-extra p {
   font-size: 14px;
   color: #666;
   margin-bottom: 10px;
+  text-align: center;
 }
 
 .extra-content {
@@ -510,6 +531,85 @@ main {
   color: #999;
   padding: 15px;
 }
+
+.extra-content.active {
+  border-style: solid;
+  border-color: #5fb3c7;
+  background: #f0f9fb;
+}
+
+/* ========================================
+   CAMERA VIEW STYLING
+   ======================================== */
+
+.camera-view {
+  width: 100%;
+}
+
+.camera-view h3 {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.camera-view p {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.qr-scanner-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 1;
+  max-height: 300px;
+}
+
+.qr-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.qr-scanner-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  border: 3px solid #5fb3c7;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  animation: scannerPulse 2s infinite;
+}
+
+@keyframes scannerPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2000px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(95, 179, 199, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2000px rgba(0, 0, 0, 0.5),
+      0 0 30px rgba(95, 179, 199, 0.6);
+  }
+}
+
+/* ========================================
+   BOOKING FORM STYLING
+   ======================================== */
 
 .checkin-form {
   width: 100%;
@@ -564,15 +664,6 @@ main {
   padding: 8px 12px;
   font-size: 12px;
   margin: 0;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #333;
 }
 
 .modal-content p {
@@ -697,10 +788,18 @@ main {
   .modal-content p {
     font-size: 13px;
   }
+
+  .qr-scanner-container {
+    max-height: 250px;
+  }
+
+  .form-group input {
+    padding: 10px;
+    font-size: 13px;
+  }
 }
 
 @media (max-width: 480px) {
-
   header h1 {
     font-size: 16px;
   }
@@ -748,6 +847,14 @@ main {
     padding: 10px 12px;
     font-size: 13px;
   }
+
+  .modal-content {
+    padding: 15px;
+  }
+
+  .qr-scanner-container {
+    max-height: 200px;
+  }
 }
 
 /* ========================================
@@ -755,7 +862,6 @@ main {
    ======================================== */
 
 @media print {
-
   header,
   .user-info,
   .legend,
