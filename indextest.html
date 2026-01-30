@@ -1,0 +1,688 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Chas Room Booking</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+
+      header {
+        background: white;
+        padding: 10px 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 0;
+      }
+
+      h1 {
+        color: #333;
+        margin: 0;
+        font-size: 18px;
+      }
+
+      #login-section {
+        text-align: center;
+        margin-top: 50px;
+        padding: 20px;
+      }
+
+      #user-section {
+        padding: 0;
+      }
+
+      .user-info {
+        background: white;
+        padding: 10px 15px;
+        border-radius: 0;
+        margin-bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .user-info span {
+        font-size: 14px;
+      }
+
+      button {
+        background: #4285f4;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      button:hover {
+        background: #3367d6;
+      }
+
+      .logout-btn {
+        background: #dc3545;
+      }
+
+      .logout-btn:hover {
+        background: #c82333;
+      }
+
+      #map-container {
+        background: white;
+        padding: 0;
+        border-radius: 0;
+        box-shadow: none;
+        max-width: 100%;
+        margin: 0;
+        position: relative;
+        width: 100%;
+      }
+
+      #floor-plan {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        margin: 0;
+        border: none;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      #svg-wrapper {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        display: block;
+      }
+
+      #svg-wrapper svg {
+        width: 100%;
+        height: 60vh;
+        display: block;
+        border-bottom: 1px solid #333;
+      }
+
+      #floor-plan svg {
+        display: block;
+      }
+
+      .room {
+        position: absolute;
+        background: #4caf50;
+        border: 2px solid #2e7d32;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .room:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      .room.occupied {
+        background: #f44336;
+        border-color: #c62828;
+      }
+
+      .room.occupied:hover {
+        background: #d32f2f;
+        transform: scale(1.1);
+      }
+
+      .room-name {
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .room-capacity {
+        display: none;
+      }
+
+      .room-status {
+        font-size: 9px;
+        margin-top: 4px;
+        padding: 2px 6px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+
+      .legend {
+        display: flex;
+        gap: 15px;
+        margin: 0;
+        padding: 10px 15px;
+        background: white;
+        border-bottom: 1px solid #e0e0e0;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      @media (max-width: 768px) {
+        .legend {
+          padding: 8px 10px;
+          gap: 10px;
+        }
+
+        .legend-item {
+          font-size: 12px;
+        }
+
+        .legend-item button {
+          padding: 8px 12px;
+          font-size: 12px;
+        }
+
+        h1 {
+          font-size: 16px;
+        }
+
+        #floor-plan {
+          height: calc(100vh - 100px);
+        }
+
+        #svg-wrapper {
+          width: 100%;
+          height: auto;
+        }
+
+        #svg-wrapper svg {
+          width: 100%;
+          height: auto;
+        }
+
+        .user-info {
+          padding: 8px 10px;
+        }
+
+        button {
+          padding: 8px 16px;
+          font-size: 14px;
+        }
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .legend-color {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        border: 2px solid #333;
+      }
+
+      .legend-color.available {
+        background: #4caf50;
+      }
+
+      .legend-color.occupied {
+        background: #f44336;
+      }
+
+      /* Modal for room details */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 90%;
+      }
+
+      .modal-content h2 {
+        margin-bottom: 20px;
+      }
+
+      .modal-content button {
+        margin-top: 10px;
+        margin-right: 10px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🏫 Chas Academy</h1>
+    </header>
+
+    <div id="login-section">
+      <h2>Logga in för att boka rum</h2>
+      <p style="margin: 20px 0; color: #666">
+        Endast @chasacademy.se e-postadresser
+      </p>
+      <button id="login-btn">Logga in med Google</button>
+    </div>
+
+    <div id="user-section" style="display: none">
+      <div class="user-info">
+        <span>Inloggad som: <strong id="user-email"></strong></span>
+        <button class="logout-btn" id="logout-btn">Logga ut</button>
+      </div>
+
+      <div id="map-container">
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color available"></div>
+            <span>Tillgänglig</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color occupied"></div>
+            <span>Upptagen</span>
+          </div>
+        </div>
+
+        <div id="loading" class="loading">Laddar rum...</div>
+        <div id="floor-plan"></div>
+      </div>
+    </div>
+
+    <!-- Room Details Modal -->
+    <div id="room-modal" class="modal">
+      <div class="modal-content">
+        <h2 id="modal-room-name"></h2>
+        <p id="modal-room-status"></p>
+        <p id="modal-room-capacity"></p>
+        <div id="modal-actions"></div>
+        <button onclick="closeModal()">Stäng</button>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+    <script>
+      const SUPABASE_URL = "https://vbyopcolrvujjvdrkueb.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZieW9wY29scnZ1amp2ZHJrdWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2OTYyNDQsImV4cCI6MjA4NTI3MjI0NH0.zv5mNlYwABz_UWO5P5Gf8a5pAUt9JKueLg017Gc59RE";
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+      );
+      let currentUser = null;
+      let rooms = [];
+      let panZoomInstance = null;
+
+      // Check session on page load
+      async function checkSession() {
+        try {
+          const {
+            data: { session },
+            error,
+          } = await supabaseClient.auth.getSession();
+          if (error) {
+            console.error("Session error:", error);
+            return;
+          }
+          if (session) {
+            console.log("Session found:", session.user.email);
+            showUser(session.user);
+          } else {
+            console.log("No session found");
+          }
+        } catch (err) {
+          console.error("Error checking session:", err);
+        }
+      }
+
+      // Listen for auth state changes (handles OAuth callback)
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        console.log("Auth event:", event);
+        if (event === "SIGNED_IN" && session) {
+          console.log("User signed in via OAuth");
+          showUser(session.user);
+        }
+      });
+
+      // Check session on initial load
+      checkSession();
+
+      // Login
+      document
+        .getElementById("login-btn")
+        .addEventListener("click", async () => {
+          const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              queryParams: { hd: "chasacademy.se" },
+              redirectTo: window.location.origin,
+            },
+          });
+          if (error) console.error("Error:", error);
+        });
+
+      // Logout
+      document
+        .getElementById("logout-btn")
+        .addEventListener("click", async () => {
+          await supabaseClient.auth.signOut();
+          location.reload();
+        });
+
+      // Show user
+      function showUser(user) {
+        if (!user.email.endsWith("@chasacademy.se")) {
+          alert("Endast @chasacademy.se e-postadresser är tillåtna!");
+          supabaseClient.auth.signOut();
+          return;
+        }
+
+        currentUser = user;
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("user-section").style.display = "block";
+        document.getElementById("user-email").textContent = user.email;
+
+        loadRooms();
+        subscribeToRoomChanges();
+      }
+
+      // Load and render rooms
+      async function loadRooms() {
+        document.getElementById("loading").style.display = "block";
+
+        const { data, error } = await supabaseClient
+          .from("room_status")
+          .select("*");
+
+        if (error) {
+          console.error("Error loading rooms:", error);
+          document.getElementById("loading").innerHTML =
+            "Fel vid laddning av rum: " + error.message;
+          return;
+        }
+
+        rooms = data;
+        renderMap();
+      }
+
+      // Render the floor plan
+      function renderMap() {
+        const floorPlan = document.getElementById("floor-plan");
+        document.getElementById("loading").style.display = "none";
+
+        if (rooms.length === 0) {
+          floorPlan.innerHTML =
+            '<p style="padding: 20px; text-align: center;">Inga rum hittades. Lägg till rum i databasen.</p>';
+          return;
+        }
+
+        floorPlan.innerHTML = "";
+
+        // Load SVG inline for svg-pan-zoom
+        fetch("Group 3.svg")
+          .then((response) => response.text())
+          .then((svgText) => {
+            // Create a wrapper div for the SVG
+            const svgWrapper = document.createElement("div");
+            svgWrapper.id = "svg-wrapper";
+            svgWrapper.style.position = "relative";
+            svgWrapper.style.width = "100%";
+            svgWrapper.style.height = "100%";
+            svgWrapper.style.margin = "0";
+
+            // Insert SVG content
+            svgWrapper.innerHTML = svgText;
+            floorPlan.appendChild(svgWrapper);
+
+            // Find the SVG element
+            const svgElement = svgWrapper.querySelector("svg");
+            if (svgElement) {
+              // Ensure SVG has proper viewBox and preserves aspect ratio
+              if (!svgElement.getAttribute("viewBox")) {
+                const width = svgElement.getAttribute("width") || "725";
+                const height = svgElement.getAttribute("height") || "970";
+                svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`);
+              }
+              svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+              // Initialize svg-pan-zoom
+              const panZoom = svgPanZoom(svgElement, {
+                viewportSelector: "#floor-plan",
+                fit: true,
+                center: true,
+                minZoom: 0.5,
+                maxZoom: 3,
+                zoomScaleSensitivity: 0.25,
+              });
+
+              // Store panZoom instance for potential future use
+              window.mapPanZoom = panZoom;
+              panZoomInstance = panZoom;
+
+              // Zoom out a bit after initial fit (making it more zoomed out)
+              setTimeout(() => {
+                const currentZoom = panZoom.getZoom();
+                panZoom.zoom(currentZoom * 0.7); // Zoom out to 70% of the fit zoom
+                panZoom.center();
+              }, 100);
+
+              // Render rooms after svg-pan-zoom has initialized its structure
+              // Use requestAnimationFrame to ensure DOM is ready
+              requestAnimationFrame(() => {
+                renderRooms();
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading SVG:", error);
+            renderRooms();
+          });
+
+        // Render each room as SVG elements
+        function renderRooms() {
+          const svgElement = floorPlan.querySelector("svg");
+          if (!svgElement) return;
+
+          // Remove existing room groups to avoid duplicates
+          const existingRooms = svgElement.querySelectorAll(".room-group");
+          existingRooms.forEach((room) => room.remove());
+
+          // Find the correct parent element
+          // svg-pan-zoom may wrap content in a group - we need to add rooms to the transformed container
+          // Check if there's a wrapper group created by svg-pan-zoom
+          let parentElement = svgElement;
+
+          // svg-pan-zoom v3 wraps content in a group - look for it
+          // The transformed group is usually the first child group or has specific attributes
+          const children = Array.from(svgElement.children);
+          const contentGroup = children.find(
+            (child) =>
+              child.tagName === "g" &&
+              (child.getAttribute("transform") || child.children.length > 0),
+          );
+
+          // If we found a content group (likely created by svg-pan-zoom), use it
+          // Otherwise, add directly to SVG root
+          if (contentGroup) {
+            parentElement = contentGroup;
+          }
+
+          // Helper function to extract room identifier
+          function getShortRoomName(roomName) {
+            // Check for AW first (case insensitive)
+            if (roomName.match(/aw/i)) {
+              return "AW";
+            }
+
+            // Match first letter followed by number(s) (e.g., K1, G3, K10, etc.)
+            const match = roomName.match(/([A-Za-z])(\d+)/);
+            if (match) {
+              return match[1].toUpperCase() + match[2];
+            }
+
+            // Fallback: return first 3 characters
+            return roomName.substring(0, 3).toUpperCase();
+          }
+
+          rooms.forEach((room) => {
+            const shortName = getShortRoomName(room.room_name);
+            const isOccupied = room.current_status === "occupied";
+
+            // Create group for the room
+            const roomGroup = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "g",
+            );
+            roomGroup.setAttribute("class", "room-group");
+            roomGroup.setAttribute("data-room-id", room.id);
+            roomGroup.style.cursor = "pointer";
+            roomGroup.addEventListener("click", (e) => {
+              openRoomModal(room);
+            });
+
+            // Position room at exact coordinates (coordinates represent the center of the circle)
+            const circle = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "circle",
+            );
+            circle.setAttribute("cx", room.coordinates_x);
+            circle.setAttribute("cy", room.coordinates_y);
+            circle.setAttribute("r", "25");
+            circle.setAttribute("fill", isOccupied ? "#f44336" : "#4caf50");
+            circle.setAttribute("stroke", isOccupied ? "#c62828" : "#2e7d32");
+            circle.setAttribute("stroke-width", "2");
+
+            // Create text
+            const text = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "text",
+            );
+            text.setAttribute("x", room.coordinates_x);
+            text.setAttribute("y", room.coordinates_y + 5);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("fill", "white");
+            text.setAttribute("font-size", "14");
+            text.setAttribute("font-weight", "bold");
+            text.textContent = shortName;
+
+            roomGroup.appendChild(circle);
+            roomGroup.appendChild(text);
+            parentElement.appendChild(roomGroup);
+          });
+        }
+      }
+
+      // Open room modal
+      function openRoomModal(room) {
+        const modal = document.getElementById("room-modal");
+        const modalName = document.getElementById("modal-room-name");
+        const modalStatus = document.getElementById("modal-room-status");
+        const modalCapacity = document.getElementById("modal-room-capacity");
+        const modalActions = document.getElementById("modal-actions");
+
+        modalName.textContent = room.room_name;
+        modalCapacity.textContent = `Kapacitet: ${room.capacity} platser`;
+
+        if (room.current_status === "occupied") {
+          modalStatus.textContent = `Status: Upptagen (${Math.round(room.minutes_remaining)} minuter kvar)`;
+          modalActions.innerHTML =
+            '<p style="color: #f44336;">Detta rum är för närvarande upptaget.</p>';
+        } else {
+          modalStatus.textContent = "Status: Tillgänglig";
+          modalActions.innerHTML = `
+          <button onclick="checkIntoRoom('${room.id}')">Checka in (2 timmar)</button>
+        `;
+        }
+
+        modal.classList.add("active");
+      }
+
+      // Close modal
+      function closeModal() {
+        document.getElementById("room-modal").classList.remove("active");
+      }
+
+      // Check into room
+      async function checkIntoRoom(roomId) {
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 2);
+
+        const { data, error } = await supabaseClient
+          .from("occupancies")
+          .insert({
+            room_id: roomId,
+            user_id: currentUser.id,
+            expires_at: expiresAt.toISOString(),
+            status: "active",
+          });
+
+        if (error) {
+          alert("Kunde inte checka in: " + error.message);
+          console.error("Check-in error:", error);
+        } else {
+          alert("Incheckad! Du har rummet i 2 timmar.");
+          closeModal();
+          loadRooms(); // Refresh the map
+        }
+      }
+
+      // Subscribe to real-time changes
+      function subscribeToRoomChanges() {
+        supabaseClient
+          .channel("room-changes")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "occupancies" },
+            (payload) => {
+              console.log("Room status changed:", payload);
+              loadRooms(); // Refresh map when any room changes
+            },
+          )
+          .subscribe();
+      }
+
+      // Close modal when clicking outside
+      document.getElementById("room-modal").addEventListener("click", (e) => {
+        if (e.target.id === "room-modal") {
+          closeModal();
+        }
+      });
+    </script>
+  </body>
+</html>

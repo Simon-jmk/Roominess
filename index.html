@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Supabase Test Clean</title>
+</head>
+<body>
+  <h1>Chas Room Booking - Tester1</h1>
+  
+  <div id="login-section">
+    <button id="login-btn">Sign in with Google</button>
+  </div>
+  
+  <div id="user-section" style="display:none;">
+    <p>Logged in as: <span id="user-email"></span></p>
+    <button id="load-rooms-btn">Load Rooms</button>
+    <button id="logout-btn">Logout</button>
+    <div id="rooms"></div>
+  </div>
+
+  <!-- Load Supabase AFTER body content -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    // Wait for Supabase to load
+    window.addEventListener('load', function() {
+      const SUPABASE_URL = 'https://vbyopcolrvujjvdrkueb.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZieW9wY29scnZ1amp2ZHJrdWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2OTYyNDQsImV4cCI6MjA4NTI3MjI0NH0.zv5mNlYwABz_UWO5P5Gf8a5pAUt9JKueLg017Gc59RE';
+      
+      console.log('Creating Supabase client...');
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('Supabase client created successfully');
+
+      // Check session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) showUser(session.user);
+      });
+
+      // Login
+      document.getElementById('login-btn').addEventListener('click', async () => {
+        console.log('Login clicked');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            queryParams: { hd: 'chasacademy.se' },
+            redirectTo: window.location.origin
+          }
+        });
+        if (error) console.error('Error:', error);
+      });
+
+      // Logout
+      document.getElementById('logout-btn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        location.reload();
+      });
+
+      // Load rooms
+      document.getElementById('load-rooms-btn').addEventListener('click', async () => {
+        const { data, error } = await supabase.from('room_status').select('*');
+        if (error) {
+          alert('Error: ' + error.message);
+        } else {
+          document.getElementById('rooms').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+      });
+
+      // Show user
+      function showUser(user) {
+        if (!user.email.endsWith('@chasacademy.se')) {
+          alert('Only @chasacademy.se emails allowed!');
+          supabase.auth.signOut();
+          return;
+        }
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('user-section').style.display = 'block';
+        document.getElementById('user-email').textContent = user.email;
+      }
+
+      // Auth changes
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN') showUser(session.user);
+      });
+    });
+  </script>
+</body>
+</html>
